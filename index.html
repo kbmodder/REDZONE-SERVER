@@ -3,167 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KBX Predictor</title>
+    <title>Game Results & Predictions</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #1e1e2f 0%, #2a1a3d 100%);
-            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
         }
-        .light-mode {
-            background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
-            color: #1f2937;
+        .tab-button {
+            transition: all 0.3s ease;
         }
-        .light-mode .bg-gray-900\/80 {
-            background: rgba(255, 255, 255, 0.9);
+        .tab-button.active {
+            background-color: #4a5568;
+            color: #ffffff;
+            border-bottom: 2px solid #ed8936;
         }
-        .light-mode .bg-gray-900\/90 {
-            background: rgba(255, 255, 255, 0.95);
+        .tab-content {
+            transition: opacity 0.3s ease;
         }
-        .light-mode .text-gray-400 {
-            color: #4b5563;
+        .glow {
+            box-shadow: 0 0 10px rgba(237, 137, 54, 0.5);
         }
-        .light-mode .text-purple-300 {
-            color: #6b7280;
+        .prediction-card {
+            animation: fadeIn 0.5s ease-in-out;
         }
-        .light-mode .text-purple-400 {
-            color: #5b21b6;
-        }
-        .light-mode .border-purple-500\/30 {
-            border-color: rgba(139, 92, 246, 0.3);
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-        .hover-glow:hover {
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
-        }
-        .animate-slide-up {
-            animation: slideUp 0.5s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="text-white min-h-screen font-sans transition-colors duration-300">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <div class="flex justify-between items-center">
-                <h1 class="text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400 animate-pulse">
-                    KBX Predictor
-                </h1>
-                <button id="theme-toggle" class="px-4 py-2 bg-gray-800 glass-effect rounded-lg text-sm font-semibold hover:bg-gray-700 transition-all duration-300">Toggle Light Mode</button>
-            </div>
-            <p class="text-xl text-gray-300 mt-3">QuantumStar AI Color Trading Prediction Engine</p>
-            <p id="period1m" class="text-lg text-gray-400 mt-2">Period: Loading...</p>
-            <p id="countdown" class="text-lg text-gray-400 mt-2">Next Period: Calculating...</p>
-        </header>
-
-        <!-- Tabs -->
-        <div class="flex justify-center mb-8">
-            <div class="flex space-x-4 bg-gray-900/80 glass-effect rounded-full p-2 shadow-lg">
-                <button id="home-tab" class="tab-button px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 hover-glow">Home</button>
-                <button id="history-tab" class="tab-button px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 hover:bg-gray-700 hover-glow">History</button>
-                <button id="results-tab" class="tab-button px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 hover:bg-gray-700 hover-glow">Results</button>
-                <button id="analytics-tab" class="tab-button px-6 py-3 rounded-full text-lg font-semibold transition-all duration-300 hover:bg-gray-700 hover-glow">Analytics</button>
-            </div>
+<body class="min-h-screen text-gray-200 font-sans">
+    <div class="container mx-auto p-4 sm:p-6">
+        <h1 class="text-4xl font-bold text-center mb-6 text-orange-400">KB MODDER SERVERS</h1>
+        <div class="flex justify-center mb-4">
+            <button id="home-tab" class="tab-button px-4 py-2 mx-2 rounded-t-lg text-lg font-semibold bg-gray-700 hover:bg-gray-600 active">Home</button>
+            <button id="results-tab" class="tab-button px-4 py-2 mx-2 rounded-t-lg text-lg font-semibold bg-gray-700 hover:bg-gray-600">Results</button>
         </div>
-
-        <!-- Content -->
-        <div id="content" class="bg-gray-900/90 glass-effect rounded-2xl p-8 shadow-2xl border border-purple-500/30 animate-slide-up">
-            <!-- Home Tab Content -->
-            <div id="home-content" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div id="servers" class="space-y-4">
-                        <h2 class="text-2xl font-bold text-purple-400">Prediction Servers</h2>
-                        <div id="server-buttons" class="space-y-2">
-                            <button class="server-btn w-full py-3 px-4 bg-gradient-to-r from-indigo-700 to-blue-900 glass-effect rounded-lg text-lg font-semibold hover:scale-105 transition-transform duration-300 hover-glow">QuantumStar AI Predictor</button>
-                        </div>
-                    </div>
-                    <div id="prediction" class="col-span-2 hidden">
-                        <h2 class="text-2xl font-bold text-purple-400">Prediction Details</h2>
-                        <button id="change-server-btn" class="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 glass-effect rounded-lg text-lg font-semibold hover:scale-105 transition-transform duration-300 hover-glow">Change Server</button>
-                        <div id="prediction-details" class="mt-4 space-y-4"></div>
-                    </div>
-                </div>
-                <div id="all-predictions" class="mt-8">
-                    <h2 class="text-2xl font-bold text-purple-400">Current Prediction</h2>
-                    <div id="all-predictions-list" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                </div>
-                <div id="pattern-analysis" class="mt-8">
-                    <h2 class="text-2xl font-bold text-purple-400">Deep Pattern Analysis</h2>
-                    <div id="pattern-analysis-list" class="mt-4 text-gray-400"></div>
-                </div>
-            </div>
-
-            <!-- History Tab Content -->
-            <div id="history-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-purple-400">Prediction History</h2>
-                <button id="export-history-btn" class="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 glass-effect rounded-lg text-lg font-semibold hover:scale-105 transition-transform duration-300 hover-glow">Export History</button>
-                <div id="history-list" class="mt-4 space-y-4"></div>
-            </div>
-
-            <!-- Results Tab Content -->
-            <div id="results-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-purple-400">Last 10 Results</h2>
-                <div id="results-list" class="mt-4 space-y-4"></div>
-            </div>
-
-            <!-- Analytics Tab Content -->
-            <div id="analytics-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-purple-400">Prediction Analytics</h2>
-                <canvas id="confidence-chart" class="mt-4"></canvas>
-            </div>
+        <div id="app-root" class="bg-gray-800 rounded-lg p-6 shadow-lg glow">
+            <p class="text-lg text-center mb-4">Current Period: <span id="period1m">Loading...</span></p>
         </div>
     </div>
 
     <script>
-        const state = {
+        const RESULTS_TO_FETCH = 10;
+        let lastPrediction = null;
+        let lastPredictionEnhanced = null;
+        let lastPredictionAI = null;
+        let history = JSON.parse(localStorage.getItem('predictionHistory')) || [];
+        let currentTab = 'home';
+        let lastMinute = null;
+
+        let state = {
             lastFetchedPeriod: null,
-            isLive: false,
+            nextPeriod: null,
             isLoading: false,
+            isLive: true,
             results: [],
-            predictions: [],
-            history: JSON.parse(localStorage.getItem('kbxHistory')) || [],
-            currentPeriod: '',
-            lastPredictionPeriod: '',
-            selectedServer: null,
-            memoryMatrix: Array(100).fill().map(() => Array(100).fill(0.1)), // Transition probabilities for n1 to n100
-            neuralWeights: Array(100).fill().map(() => Array(100).fill(Math.random() * 0.1 + 0.01)), // Adaptive weights
-            patternMemory: Array(100).fill().map(() => Math.floor(Math.random() * 100) + 1), // Seed with random n1 to n100
-            learningRate: 0.01, // For weight updates
-            confidenceHistory: [], // Track confidence scores
-            engineWeights: Array(10).fill(1.0), // Weights for each engine
-            errorMessage: '', // Store last API error
-            // Unique Big/Small sequences for n1 to n100
-            numberSequences: (() => {
-                const sequences = {};
-                for (let i = 1; i <= 100; i++) {
-                    const sequence = [];
-                    const seed = i * 17 % 1024; // Unique seed for each number
-                    let x = seed / 1024;
-                    for (let j = 0; j < 10; j++) {
-                        x = (x * 9301 + 49297) % 233280; // Linear congruential generator for pseudo-random sequence
-                        sequence.push(x / 233280 < 0.5 ? 'Big' : 'Small');
-                    }
-                    sequences[`n${i}`] = sequence;
-                }
-                // Override n8 for example consistency
-                sequences['n8'] = ['Big', 'Small', 'Big', 'Small', 'Big', 'Big', 'Small', 'Big', 'Small', 'Big'];
-                return sequences;
-            })()
+            mostFrequentNumber: null,
+            leastFrequentNumber: null
         };
 
-        const RESULTS_TO_FETCH = 10;
+        function calculateFrequentNumbers(data) {
+            const numberCounts = {};
+            data.forEach(item => {
+                const num = parseInt(item.number);
+                numberCounts[num] = (numberCounts[num] || 0) + 1;
+            });
+            let mostFrequent = null, leastFrequent = null;
+            let maxCount = 0, minCount = Infinity;
+            Object.entries(numberCounts).forEach(([num, count]) => {
+                if (count > maxCount) {
+                    mostFrequent = num;
+                    maxCount = count;
+                }
+                if (count < minCount) {
+                    leastFrequent = num;
+                    minCount = count;
+                }
+            });
+            return { mostFrequent, leastFrequent };
+        }
 
-        // Update Game Period
+        function predictBigSmall(data) {
+            const numbers = data.map(item => parseInt(item.number));
+            const lastResult = numbers[0] >= 5 ? 'BIG' : 'SMALL';
+            const bigCount1 = numbers.filter(num => num >= 5).length;
+            const smallCount1 = 10 - bigCount1;
+
+            let bigCount2 = 0;
+            let smallCount2 = 0;
+            data.forEach((item, index) => {
+                const weight = index === 0 ? 2.0 : 1 + (0.3 * (9 - index));
+                if (parseInt(item.number) >= 5) {
+                    bigCount2 += weight;
+                } else {
+                    smallCount2 += weight;
+                }
+            });
+
+            let streakCount = 1;
+            let currentStreak = lastResult;
+            for (let i = 1; i < numbers.length; i++) {
+                const current = numbers[i] >= 5 ? 'BIG' : 'SMALL';
+                if (current === currentStreak) {
+                    streakCount++;
+                } else {
+                    break;
+                }
+            }
+
+            let alternateCount = 0;
+            for (let i = 1; i < numbers.length; i++) {
+                if ((numbers[i] >= 5 && numbers[i-1] < 5) || 
+                    (numbers[i] < 5 && numbers[i-1] >= 5)) {
+                    alternateCount++;
+                }
+            }
+
+            const { mostFrequent, leastFrequent } = calculateFrequentNumbers(data);
+            const mostFrequentBias = mostFrequent >= 5 ? 0.1 : -0.1;
+            const leastFrequentBias = leastFrequent >= 5 ? -0.05 : 0.05;
+
+            let prediction;
+            let confidence;
+            if (bigCount1 > smallCount1) {
+                prediction = 'BIG';
+                confidence = Math.min(50 + ((bigCount1 - smallCount1) * 10), 90);
+            } else if (smallCount1 > bigCount1) {
+                prediction = 'SMALL';
+                confidence = Math.min(50 + ((smallCount1 - bigCount1) * 10), 90);
+            } else {
+                if (bigCount2 >= smallCount2) {
+                    prediction = 'BIG';
+                    confidence = Math.min(70 + ((bigCount2 - smallCount2) * 3), 85);
+                } else {
+                    prediction = 'SMALL';
+                    confidence = Math.min(70 + ((smallCount2 - bigCount2) * 3), 85);
+                }
+            }
+
+            if (streakCount >= 3) {
+                prediction = currentStreak;
+                confidence = Math.min(confidence + (streakCount * 5), 95);
+            }
+
+            if (alternateCount >= 7) {
+                prediction = lastResult === 'BIG' ? 'SMALL' : 'BIG';
+                confidence = Math.min(confidence + 7, 95);
+            }
+
+            confidence = Math.min(confidence + (prediction === 'BIG' ? mostFrequentBias : leastFrequentBias) * 10, 95);
+
+            return [prediction, confidence, mostFrequent, leastFrequent];
+        }
+
+        function predictBigSmallEnhanced(data) {
+            const numbers = data.map(item => parseInt(item.number));
+            const lastResult = numbers[0] >= 5 ? 'BIG' : 'SMALL';
+            const bigCount1 = numbers.filter(num => num >= 5).length;
+            const smallCount1 = 10 - bigCount1;
+
+            let bigCount2 = 0;
+            let smallCount2 = 0;
+            data.forEach((item, index) => {
+                const weight = index === 0 ? 2.5 : 1 + (0.4 * (9 - index));
+                if (parseInt(item.number) >= 5) {
+                    bigCount2 += weight;
+                } else {
+                    smallCount2 += weight;
+                }
+            });
+
+            const variance = numbers.reduce((sum, num) => sum + (num - 4.5) ** 2, 0) / numbers.length;
+            const varianceFactor = variance < 2 ? 0.8 : 1.2;
+
+            let streakCount = 1;
+            let currentStreak = lastResult;
+            for (let i = 1; i < numbers.length; i++) {
+                const current = numbers[i] >= 5 ? 'BIG' : 'SMALL';
+                if (current === currentStreak) {
+                    streakCount++;
+                } else {
+                    break;
+                }
+            }
+
+            let alternateCount = 0;
+            const alternationThreshold = variance > 3 ? 6 : 7;
+            for (let i = 1; i < numbers.length; i++) {
+                if ((numbers[i] >= 5 && numbers[i-1] < 5) || 
+                    (numbers[i] < 5 && numbers[i-1] >= 5)) {
+                    alternateCount++;
+                }
+            }
+
+            const { mostFrequent, leastFrequent } = calculateFrequentNumbers(data);
+            const mostFrequentBias = mostFrequent >= 5 ? 0.15 : -0.15;
+            const leastFrequentBias = leastFrequent >= 5 ? -0.07 : 0.07;
+
+            let prediction = lastResult === 'BIG' ? 'SMALL' : 'BIG';
+            let confidence;
+            if (bigCount1 > smallCount1) {
+                confidence = Math.min(50 + ((bigCount1 - smallCount1) * 12), 90) * varianceFactor;
+            } else if (smallCount1 > bigCount1) {
+                confidence = Math.min(50 + ((smallCount1 - bigCount1) * 12), 90) * varianceFactor;
+            } else {
+                if (bigCount2 >= smallCount2) {
+                    confidence = Math.min(70 + ((bigCount2 - smallCount2) * 4), 85) * varianceFactor;
+                } else {
+                    confidence = Math.min(70 + ((smallCount2 - bigCount2) * 4), 85) * varianceFactor;
+                }
+            }
+
+            if (streakCount >= (variance > 3 ? 2 : 3)) {
+                confidence = Math.min(confidence + (streakCount * 6), 95);
+            }
+
+            if (alternateCount >= alternationThreshold) {
+                confidence = Math.min(confidence + 8, 95);
+            }
+
+            confidence = Math.min(confidence + (prediction === 'BIG' ? mostFrequentBias : leastFrequentBias) * 15, 95);
+
+            return [prediction, confidence, mostFrequent, leastFrequent];
+        }
+
+        function predictBigSmallAI(data) {
+            const numbers = data.map(item => parseInt(item.number));
+            const lastResult = numbers[0] >= 5 ? 'BIG' : 'SMALL';
+            const bigCount1 = numbers.filter(num => num >= 5).length;
+            const smallCount1 = 10 - bigCount1;
+            let bigCount2 = 0;
+            let smallCount2 = 0;
+            data.forEach((item, index) => {
+                const weight = index === 0 ? 3.0 : 1 + (0.5 * (9 - index));
+                if (parseInt(item.number) >= 5) {
+                    bigCount2 += weight;
+                } else {
+                    smallCount2 += weight;
+                }
+            });
+            const mean = numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
+            const variance = numbers.reduce((sum, n) => sum + (n - mean) ** 2, 0) / numbers.length;
+            const varianceFactor = variance < 8 ? 0.8 : variance > 12 ? 1.2 : 1.0;
+            let streakCount = 1;
+            let currentStreak = lastResult;
+            for (let i = 1; i < numbers.length; i++) {
+                const current = numbers[i] >= 5 ? 'BIG' : 'SMALL';
+                if (current === currentStreak) {
+                    streakCount++;
+                } else {
+                    break;
+                }
+            }
+            let alternateCount = 0;
+            for (let i = 1; i < numbers.length; i++) {
+                if ((numbers[i] >= 5 && numbers[i-1] < 5) || 
+                    (numbers[i] < 5 && numbers[i-1] >= 5)) {
+                    alternateCount++;
+                }
+            }
+            const { mostFrequent, leastFrequent } = calculateFrequentNumbers(data);
+            const mostFrequentBias = mostFrequent >= 5 ? 0.2 : -0.2;
+            const leastFrequentBias = leastFrequent >= 5 ? -0.1 : 0.1;
+            const oddCount = numbers.filter(n => n % 2 === 1).length;
+            const evenCount = 10 - oddCount;
+            const parityBias = (oddCount > evenCount && lastResult === 'BIG') ? 0.05 : -0.05;
+            let cov = 0;
+            for (let i = 0; i < numbers.length - 1; i++) {
+                const x = numbers[i] >= 5 ? 1 : 0;
+                const y = numbers[i + 1] >= 5 ? 1 : 0;
+                cov += (x - 0.5) * (y - 0.5);
+            }
+            const correlation = (numbers.length > 1) ? (cov / (numbers.length - 1)) / 0.25 : 0;
+            let prediction = lastResult === 'BIG' ? 'SMALL' : 'BIG';
+            let confidence;
+            if (bigCount1 > smallCount1) {
+                confidence = 50 + ((bigCount1 - smallCount1) * 15);
+            } else if (smallCount1 > bigCount1) {
+                confidence = 50 + ((smallCount1 - bigCount1) * 15);
+            } else {
+                if (bigCount2 >= smallCount2) {
+                    confidence = 70 + (Math.abs(bigCount2 - smallCount2) * 5);
+                } else {
+                    confidence = 70 + (Math.abs(bigCount2 - smallCount2) * 5);
+                }
+            }
+            confidence *= varianceFactor;
+            if (streakCount >= 4) {
+                confidence += 10;
+            } else if (streakCount >= 2) {
+                confidence += streakCount * 5;
+            }
+            if (alternateCount >= 8) {
+                confidence += 10;
+            }
+            if (prediction === 'BIG') {
+                confidence += mostFrequentBias * 20 + leastFrequentBias * 10 + parityBias * 10;
+            } else {
+                confidence += -mostFrequentBias * 20 - leastFrequentBias * 10 - parityBias * 10;
+            }
+            if (correlation < -0.3) {
+                confidence += 15;
+            }
+            confidence = Math.min(Math.max(confidence, 50), 95);
+            return [prediction, confidence, mostFrequent, leastFrequent];
+        }
+
         function updateGamePeriod() {
             let now = new Date();
             let h = now.getUTCHours();
@@ -173,667 +319,216 @@
                 ("0" + (now.getUTCMonth() + 1)).slice(-2) +
                 ("0" + now.getUTCDate()).slice(-2);
             let period = "1000" + (10001 + totalMinutes);
-            state.currentPeriod = formattedDate + period;
-            document.getElementById("period1m").innerText = `Period: ${state.currentPeriod}`;
-            return state.currentPeriod;
+            document.getElementById("period1m").innerText = formattedDate + period;
+            return formattedDate + period;
         }
 
-        // Countdown Timer
-        function startCountdown() {
-            setInterval(() => {
-                const now = new Date();
-                const secondsUntilNextMinute = 60 - now.getUTCSeconds();
-                document.getElementById("countdown").innerText = `Next Period: ${secondsUntilNextMinute} seconds`;
-            }, 1000);
+        function generatePrediction(period) {
+            if (!state.results || state.results.length === 0) return;
+            const [prediction, confidence, mostFrequent, leastFrequent] = predictBigSmall(state.results);
+            const [predictionEnhanced, confidenceEnhanced] = predictBigSmallEnhanced(state.results);
+            const [predictionAI, confidenceAI] = predictBigSmallAI(state.results);
+            lastPrediction = prediction;
+            lastPredictionEnhanced = predictionEnhanced;
+            lastPredictionAI = predictionAI;
+            state.mostFrequentNumber = mostFrequent;
+            state.leastFrequentNumber = leastFrequent;
+            state.nextPeriod = period;
+            history.unshift({
+                PERIOD: period,
+                number: 'N/A',
+                RESULT: 'N/A',
+                SERVER ULTRA: prediction,
+                SERVER VIP: predictionEnhanced,
+                SERVER AI: predictionAI,
+                CONFIDENCE: confidence,
+                CONFIDENCE VIP: confidenceEnhanced,
+               C: confidenceAI,
+                time: new Date().toLocaleString()
+            });
+            if (history.length > 20) {
+                history.pop();
+            }
+            localStorage.setItem('predictionHistory', JSON.stringify(history));
+            render();
         }
 
-        // Fetch Game Results from API
-        async function fetchGameResult(maxRetries = 5) {
-            state.isLoading = true;
-            state.errorMessage = '';
+        function updateUI(data) {
+            if (!data || data.length === 0) return;
+            const prevResult = data[0];
+            const prevPeriod = prevResult.issueNumber;
+            const prevNumber = prevResult.number;
+            const actualResult = parseInt(prevNumber) >= 5 ? 'BIG' : 'SMALL';
+
+            const historyItem = history.find(item => item.period === prevPeriod);
+            if (historyItem && historyItem.number === 'N/A') {
+                historyItem.number = prevNumber;
+                historyItem.result = actualResult;
+                localStorage.setItem('predictionHistory', JSON.stringify(history));
+            }
+            render();
+        }
+
+        function render() {
+            const appRoot = document.getElementById('app-root');
+            let html = `<p class="text-lg text-center mb-4">Current Period: <span id="period1m">${state.nextPeriod || 'Loading...'}</span></p>`;
+            if (state.isLoading) {
+                html += '<p class="text-center text-lg">Loading game results...</p>';
+            } else if (currentTab === 'home') {
+                html += '<div class="prediction-card p-4 bg-gray-700 rounded-lg mb-4">';
+                html += `<h2 class="text-2xl font-semibold text-orange-400">Next Prediction (Period: ${state.nextPeriod || 'N/A'})</h2>`;
+                html += `<p class="text-lg">Primary Prediction: <span class="font-bold ${lastPrediction === 'BIG' ? 'text-green-400' : 'text-red-400'}">${lastPrediction || 'N/A'}</span> (${history[0]?.confidence.toFixed(2) || 0}%)</p>`;
+                html += `<p class="text-lg">Enhanced Prediction: <span class="font-bold ${lastPredictionEnhanced === 'BIG' ? 'text-green-400' : 'text-red-400'}">${lastPredictionEnhanced || 'N/A'}</span> (${history[0]?.confidenceEnhanced.toFixed(2) || 0}%)</p>`;
+                html += `<p class="text-lg">AI Prediction: <span class="font-bold ${lastPredictionAI === 'BIG' ? 'text-green-400' : 'text-red-400'}">${lastPredictionAI || 'N/A'}</span> (${history[0]?.confidenceAI.toFixed(2) || 0}%)</p>`;
+                html += `<p class="text-lg">Most Frequent Number: ${state.mostFrequentNumber || 'N/A'}</p>`;
+                html += `<p class="text-lg">Least Frequent Number: ${state.leastFrequentNumber || 'N/A'}</p>`;
+                html += '</div>';
+                html += '<h2 class="text-2xl font-semibold text-orange-400 mb-4">Prediction History</h2>';
+                html += '<div class="overflow-x-auto"><table class="w-full text-left">';
+                html += '<tr class="bg-gray-600"><th class="p-3">Period</th><th>Number</th><th>Result</th><th>Primary Prediction</th><th>Enhanced Prediction</th><th>AI Prediction</th><th>Confidence</th><th>Enhanced Confidence</th><th>AI Confidence</th><th>Time</th></tr>';
+                history.slice(0, 10).forEach(item => {
+                    html += `<tr class="hover:bg-gray-600">
+                        <td class="p-3">${item.period}</td>
+                        <td>${item.number}</td>
+                        <td>${item.result}</td>
+                        <td class="${item.prediction === 'BIG' ? 'text-green-400' : 'text-red-400'}">${item.prediction}</td>
+                        <td class="${item.predictionEnhanced === 'BIG' ? 'text-green-400' : 'text-red-400'}">${item.predictionEnhanced}</td>
+                        <td class="${item.predictionAI === 'BIG' ? 'text-green-400' : 'text-red-400'}">${item.predictionAI}</td>
+                        <td>${item.confidence ? item.confidence.toFixed(2) + '%' : 'N/A'}</td>
+                        <td>${item.confidenceEnhanced ? item.confidenceEnhanced.toFixed(2) + '%' : 'N/A'}</td>
+                        <td>${item.confidenceAI ? item.confidenceAI.toFixed(2) + '%' : 'N/A'}</td>
+                        <td>${item.time}</td>
+                    </tr>`;
+                });
+                html += '</table></div>';
+            } else if (currentTab === 'results') {
+                html += '<h2 class="text-2xl font-semibold text-orange-400 mb-4">Last 10 Game Results</h2>';
+                html += '<div class="overflow-x-auto"><table class="w-full text-left">';
+                html += '<tr class="bg-gray-600"><th class="p-3">Issue Number</th><th>Number</th><th>Result</th><th>Time</th></tr>';
+                state.results.slice(0, 10).forEach(result => {
+                    const resultStatus = parseInt(result.number) >= 5 ? 'BIG' : 'SMALL';
+                    html += `<tr class="hover:bg-gray-600">
+                        <td class="p-3">${result.issueNumber}</td>
+                        <td>${result.number}</td>
+                        <td class="${resultStatus === 'BIG' ? 'text-green-400' : 'text-red-400'}">${resultStatus}</td>
+                        <td>${result.openTime || 'N/A'}</td>
+                    </tr>`;
+                });
+                html += '</table></div>';
+            } else {
+                html += '<p class="text-center text-lg">No results available.</p>';
+            }
+            appRoot.innerHTML = html;
+        }
+
+        function fetchMockGameResult() {
+            const results = [];
+            let lastPeriod = state.lastFetchedPeriod ? BigInt(state.lastFetchedPeriod) : BigInt('20240701001');
+            let lastResult = Math.random() < 0.5 ? 'B' : 'S';
+            for (let i = 0; i < RESULTS_TO_FETCH; i++) {
+                const number = lastResult === 'B' ? (Math.random() < 0.7 ? Math.floor(Math.random() * 5) : Math.floor(Math.random() * 5 + 5))
+                                           : (Math.random() < 0.7 ? Math.floor(Math.random() * 5 + 5) : Math.floor(Math.random() * 5));
+                lastResult = number >= 5 ? 'B' : 'S';
+                results.push({
+                    issueNumber: (lastPeriod + BigInt(i)).toString(),
+                    number: number.toString(),
+                    openTime: new Date(Date.now() - i * 60000).toLocaleString()
+                });
+            }
+            state.lastFetchedPeriod = results[0].issueNumber;
+            state.nextPeriod = String(parseInt(results[0].issueNumber) + 1);
+            console.log("Using mock data for game results.");
+            return results;
+        }
+
+        async function fetchGameResult(maxRetries = 3, retryDelay = 2000) {
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
                     const timestamp = Date.now();
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-                    const response = await fetch(`https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${timestamp}`, {
-                        method: 'GET',
-                        headers: { 'Cache-Control': 'no-cache' },
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) {
-                        let errorMessage = `HTTP error! Status: ${response.status}`;
-                        if (response.status === 429) {
-                            errorMessage = 'Rate limit exceeded. Please wait and try again.';
-                        } else if (response.status === 403) {
-                            errorMessage = 'Access denied. Check CORS policy or API permissions.';
-                        }
-                        state.errorMessage = errorMessage;
-                        console.error(`Attempt ${attempt}: ${errorMessage}`);
-                        throw new Error(errorMessage);
-                    }
+                    const response = await fetch(`https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${timestamp}`);
                     const data = await response.json();
-                    if (!data?.data?.list || !Array.isArray(data.data.list) || data.data.list.length < 10) {
-                        const errorMessage = `Attempt ${attempt}: API returned insufficient data (${data?.data?.list?.length || 0} results).`;
-                        state.errorMessage = errorMessage;
-                        console.warn(errorMessage);
+                    if (!data?.data?.list || !Array.isArray(data.data.list) || data.data.list.length === 0) {
+                        console.warn(`Attempt ${attempt}: API returned no valid data.`);
                         if (attempt === maxRetries) {
-                            return useFallbackData();
+                            state.isLive = false;
+                            state.results = fetchMockGameResult();
+                            renderErrorNotification();
+                            updateUI(state.results);
+                            return state.results;
                         }
-                        await new Promise(resolve => setTimeout(resolve, 3000 * Math.pow(2, attempt - 1))); // Exponential backoff
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
                         continue;
                     }
+                    const latestIssue = data.data.list[0].issueNumber;
+                    if (state.lastFetchedPeriod && latestIssue <= state.lastFetchedPeriod) {
+                        return state.results;
+                    }
                     state.isLive = true;
-                    state.isLoading = false;
-                    const results = data.data.list.slice(0, RESULTS_TO_FETCH).map(item => {
-                        const number = parseInt(item.number);
-                        return {
-                            issueNumber: item.issueNumber || (BigInt(state.lastFetchedPeriod || '20240701001') + BigInt(1)).toString(),
-                            number: isNaN(number) ? '50' : String(Math.min(100, Math.max(1, number))), // Ensure 1-100
-                            openTime: new Date().toLocaleString()
-                        };
-                    });
-                    state.results = results;
-                    state.lastFetchedPeriod = results[0].issueNumber;
-                    state.patternMemory.push(...results.map(r => parseInt(r.number)));
-                    state.patternMemory = state.patternMemory.slice(-100);
-                    return results;
+                    state.results = data.data.list.map(item => ({
+                        issueNumber: item.issueNumber,
+                        number: item.number,
+                        openTime: new Date(item.openTime).toLocaleString()
+                    })).slice(0, 10);
+                    state.lastFetchedPeriod = latestIssue;
+                    updateUI(state.results);
+                    return state.results;
                 } catch (e) {
-                    state.errorMessage = `Attempt ${attempt}: API error: ${e.message}`;
-                    console.error(state.errorMessage);
+                    console.error(`Attempt ${attempt}: API error:`, e);
                     if (attempt === maxRetries) {
                         state.isLive = false;
-                        state.isLoading = false;
-                        return useFallbackData();
+                        state.results = fetchMockGameResult();
+                        renderErrorNotification();
+                        updateUI(state.results);
+                        return state.results;
                     }
-                    await new Promise(resolve => setTimeout(resolve, 3000 * Math.pow(2, attempt - 1))); // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
                 }
             }
-            return useFallbackData();
         }
 
-        // Fallback to Cached Data
-        function useFallbackData() {
-            if (state.patternMemory.length >= 10) {
-                state.isLive = false;
-                state.errorMessage = 'Using cached data due to repeated API failures.';
-                console.warn(state.errorMessage);
-                const fallbackResults = state.patternMemory.slice(-10).map((num, i) => ({
-                    issueNumber: (BigInt(state.lastFetchedPeriod || '20240701001') + BigInt(i + 1)).toString(),
-                    number: String(Math.min(100, Math.max(1, num))),
-                    openTime: new Date().toLocaleString()
-                }));
-                state.results = fallbackResults;
-                renderErrorNotification(state.errorMessage);
-                return fallbackResults;
-            } else {
-                state.errorMessage = 'No sufficient cached data available. Generating random fallback data.';
-                console.warn(state.errorMessage);
-                const fallbackResults = Array(10).fill().map((_, i) => ({
-                    issueNumber: (BigInt(state.lastFetchedPeriod || '20240701001') + BigInt(i + 1)).toString(),
-                    number: String(Math.floor(Math.random() * 100) + 1),
-                    openTime: new Date().toLocaleString()
-                }));
-                state.results = fallbackResults;
-                state.patternMemory.push(...fallbackResults.map(r => parseInt(r.number)));
-                state.patternMemory = state.patternMemory.slice(-100);
-                renderErrorNotification(state.errorMessage);
-                return fallbackResults;
+        function renderErrorNotification() {
+            const appRoot = document.getElementById('app-root');
+            appRoot.insertAdjacentHTML('afterbegin', `<div class="error-notification p-3 bg-red-900 text-red-100 rounded-lg mb-4 text-center">
+                Failed to fetch live data. Using mock data instead.
+            </div>`);
+        }
+
+        function checkMinuteChange() {
+            const now = new Date();
+            const currentMinute = now.getUTCMinutes();
+            if (lastMinute !== currentMinute) {
+                lastMinute = currentMinute;
+                const period = updateGamePeriod();
+                generatePrediction(period);
             }
         }
 
-        // Render Error Notification
-        function renderErrorNotification(message) {
-            const content = document.getElementById('content');
-            content.insertAdjacentHTML('afterbegin', `
-                <div class="bg-red-600 text-white p-4 rounded-lg mb-4 shadow-lg animate-pulse glass-effect">
-                    ${message} Please check your connection or contact support if the issue persists.
-                </div>
-            `);
-        }
-
-        // Deep Pattern Analysis
-        function analyzePatterns() {
-            const recentResults = state.results.slice(0, 5).map(r => parseInt(r.number) > 50 ? 'Big' : 'Small');
-            const streak = recentResults.reduce((acc, curr, i, arr) => {
-                if (i === 0 || curr !== arr[i - 1]) return acc;
-                acc[curr] = (acc[curr] || 0) + 1;
-                return acc;
-            }, {});
-            const patternText = Object.entries(streak).map(([result, count]) => `${result} streak: ${count + 1}`).join(', ') || 'No clear streaks detected';
-            const frequency = Array(100).fill(0);
-            state.results.forEach(r => frequency[parseInt(r.number) - 1]++);
-            const frequencyText = frequency.map((f, i) => `${i + 1}: ${f}`).filter((_, i) => frequency[i] > 0).join(', ');
-            const entropy = -frequency.reduce((sum, f) => sum + (f / state.results.length) * Math.log2(f / state.results.length + 0.0001), 0);
-            const variance = state.results.reduce((sum, r) => sum + (parseInt(r.number) - 50) ** 2, 0) / state.results.length;
-            return `Recent Patterns: ${patternText}<br>Number Frequency: ${frequencyText}<br>Entropy: ${entropy.toFixed(2)}<br>Variance: ${variance.toFixed(2)}`;
-        }
-
-        // Render Confidence Chart
-        let confidenceChart = null;
-        function renderConfidenceChart() {
-            const ctx = document.getElementById('confidence-chart')?.getContext('2d');
-            if (!ctx) return;
-            if (confidenceChart) confidenceChart.destroy();
-            confidenceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: state.confidenceHistory.slice(-10).map((_, i) => `Period ${state.currentPeriod.slice(0, 8)}${10001 + parseInt(state.currentPeriod.slice(8)) - i}`),
-                    datasets: [{
-                        label: 'Confidence (%)',
-                        data: state.confidenceHistory.slice(-10).map(h => h.confidence),
-                        borderColor: '#a855f7',
-                        backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#a855f7',
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                        x: { reverse: true, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#ffffff' } }
-                    }
-                }
-            });
-        }
-
-        // QuantumStar AI Predictor
-        const predictionEngines = {
-            quantumStarAI: (results) => {
-                try {
-                    // Validate and preprocess input data
-                    const numbers = results.map(r => {
-                        const num = parseInt(r.number);
-                        return isNaN(num) ? 50 : Math.min(100, Math.max(1, num));
-                    });
-                    if (numbers.length < 10) {
-                        const memoryNumbers = state.patternMemory.slice(-10).reverse();
-                        numbers.push(...memoryNumbers.slice(0, 10 - numbers.length));
-                    }
-                    if (numbers.length < 10) {
-                        numbers.push(...Array(10 - numbers.length).fill(50));
-                    }
-
-                    // Advanced Pattern Analysis
-                    const frequency = Array(100).fill(0);
-                    numbers.forEach(n => frequency[n - 1]++);
-                    const mean = numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
-                    const variance = numbers.reduce((sum, n) => sum + (n - mean) ** 2, 0) / numbers.length;
-                    const trend = numbers.slice(0, 5).reduce((sum, n, i, arr) => sum + (i > 0 ? n - arr[i - 1] : 0), 0) / 4;
-                    const patternScore = frequency.map((f, i) => f * ((i + 1) - mean) / 100).reduce((sum, v) => sum + v, 0) / numbers.length;
-                    const entropy = -frequency.reduce((sum, f) => sum + (f / numbers.length) * Math.log2(f / numbers.length + 0.0001), 0);
-
-                    // Period-Based Modulation
-                    const periodNumber = parseInt(state.currentPeriod.slice(-5)) || 10001;
-                    const periodFactor = (periodNumber % 100) / 100;
-
-                    // Bayesian Inference with Balanced Priors
-                    const bigCount = state.patternMemory.filter(n => n > 50).length;
-                    const totalCount = state.patternMemory.length || 1;
-                    const priorBig = (bigCount + 1) / (totalCount + 2); // Laplace smoothing
-                    const priorSmall = 1 - priorBig;
-                    const bayesFactor = priorBig / (priorSmall || 0.1);
-
-                    // LSTM-like Sequence Modeling with Attention
-                    const lstmState = numbers.slice(0, 10).reduce((state, n, i) => {
-                        const inputGate = 1 / (1 + Math.exp(-(n / 100 + state.memory * 0.5 + trend)));
-                        const forgetGate = 1 / (1 + Math.exp(-(n / 100 - state.memory * 0.5)));
-                        const attention = 1 / (1 + Math.exp(-variance * (i / 10)));
-                        state.memory = forgetGate * state.memory + inputGate * (n / 100) * attention;
-                        return state;
-                    }, { memory: 0 }).memory;
-
-                    // Select number (n1 to n100) using high-sequence random strategy
-                    const numberKeys = Array.from({ length: 100 }, (_, i) => `n${i + 1}`);
-                    const probabilities = numberKeys.map((key, i) => {
-                        const freq = frequency[i] / (numbers.length || 1);
-                        const periodWeight = Math.sin((i + 1) * periodFactor * Math.PI) + 1;
-                        return Math.max(0.1, freq + entropy / 10 + Math.abs(lstmState) * 0.1 + periodWeight * 0.05);
-                    });
-                    const totalProb = probabilities.reduce((sum, p) => sum + p, 0) || 1;
-                    const normalizedProbs = probabilities.map(p => p / totalProb);
-                    let rand = Math.random();
-                    let cumulative = 0;
-                    let selectedNumber = 'n1';
-                    for (let i = 0; i < normalizedProbs.length; i++) {
-                        cumulative += normalizedProbs[i];
-                        if (rand <= cumulative) {
-                            selectedNumber = numberKeys[i];
-                            break;
-                        }
-                    }
-                    const selectedIndex = parseInt(selectedNumber.slice(1)) || 1;
-
-                    // Select Big/Small from sequence using period-based index
-                    const sequenceIndex = periodNumber % 10;
-                    const sequenceResult = state.numberSequences[selectedNumber][sequenceIndex];
-
-                    // 10 Prediction Engines using number sequence
-                    const enginePredictions = [
-                        // 1. Chaos Oracle: Logistic Map with Sequence
-                        (() => {
-                            try {
-                                const logisticMap = (x, r) => r * x * (1 - x);
-                                let x = (numbers[0] % 100) / 100 || 0.5;
-                                const r = 3.9 + patternScore * 0.3 + variance * 0.1 + entropy * 0.05 + periodFactor;
-                                for (let i = 0; i < 100; i++) x = logisticMap(x, r);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, 1 - Math.abs(x - 0.5)) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[0] };
-                            } catch (e) {
-                                console.error('Chaos Oracle Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 2. Fractal Mind: Fractal Dimension with Sequence
-                        (() => {
-                            try {
-                                const differences = numbers.slice(0, 8).map((n, i, arr) => i > 0 ? Math.abs(n - arr[i - 1]) : 1);
-                                const fractalDimension = Math.log(differences.reduce((sum, d) => sum + (d || 1), 0) + 0.01) / Math.log(numbers.length + 1);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, fractalDimension / 2) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[1] };
-                            } catch (e) {
-                                console.error('Fractal Mind Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 3. Quantum Flux: Superposition with Sequence
-                        (() => {
-                            try {
-                                const superposition = numbers.slice(0, 10).reduce((sum, n, i) => sum + n * Math.cos(i * Math.PI / 5 + trend + lstmState + entropy + periodFactor), 0);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, Math.abs(superposition) / 500) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[2] };
-                            } catch (e) {
-                                console.error('Quantum Flux Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 4. Neural Pulse: Neural Network with Sequence
-                        (() => {
-                            try {
-                                const input = numbers.slice(0, 10).map(n => n / 100);
-                                const output = input.reduce((sum, n, i) => sum + n * state.neuralWeights[i % 100][(numbers[0] || 50) % 100], 0);
-                                const prediction = selectedIndex;
-                                if (numbers[1] !== undefined) {
-                                    const error = ((numbers[1] || 50) % 100 - prediction);
-                                    state.neuralWeights[(numbers[0] || 50) % 100][prediction - 1] += state.learningRate * error * bayesFactor;
-                                }
-                                const confidence = Math.min(1, Math.abs(output) / 5);
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[3] };
-                            } catch (e) {
-                                console.error('Neural Pulse Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 5. Entropy Core: Entropy with Sequence
-                        (() => {
-                            try {
-                                const chaosFactor = Math.abs(Math.sin(entropy + lstmState + variance / 10 + periodFactor));
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, entropy / 10) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[4] };
-                            } catch (e) {
-                                console.error('Entropy Core Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 6. Lyapunov Engine: Chaos Stability with Sequence
-                        (() => {
-                            try {
-                                const lyapunov = Math.log(Math.abs(math.derivative('x^3 - 3*x + c', 'x').evaluate({ x: (numbers[0] || 50) / 100, c: patternScore / 10 + lstmState + entropy + periodFactor })) + 0.01);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, lyapunov / 5) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[5] };
-                            } catch (e) {
-                                console.error('Lyapunov Engine Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 7. Stochastic Vortex: Markov Chain with Sequence
-                        (() => {
-                            try {
-                                for (let i = 1; i < numbers.length; i++) {
-                                    state.memoryMatrix[(numbers[i - 1] || 50) % 100][(numbers[i] || 50) % 100] += 1;
-                                }
-                                const transitionMatrix = state.memoryMatrix.map(row => {
-                                    const sum = row.reduce((a, b) => a + b, 0) || 1;
-                                    return row.map(val => val / sum);
-                                });
-                                const probs = transitionMatrix[(numbers[0] || 50) % 100];
-                                const prediction = selectedIndex;
-                                const confidence = Math.max(...probs) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[6] };
-                            } catch (e) {
-                                console.error('Stochastic Vortex Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 8. Spectral Forge: Fourier Analysis with Sequence
-                        (() => {
-                            try {
-                                const fft = math.fft(numbers.slice(0, 8).map(n => n * (1 + patternScore / 10 + variance / 10 + entropy / 10 + periodFactor)));
-                                const magnitude = fft.reduce((sum, c) => sum + Math.sqrt(c.re ** 2 + c.im ** 2), 0) / (fft.length || 1);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, magnitude / 100) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[7] };
-                            } catch (e) {
-                                console.error('Spectral Forge Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 9. Harmonic Surge: Oscillation with Sequence
-                        (() => {
-                            try {
-                                const harmonics = numbers.slice(0, 10).map((n, i) => n * Math.sin(i * Math.PI / 5 + patternScore + lstmState + variance / 10 + entropy + periodFactor));
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, Math.abs(harmonics.reduce((sum, n) => sum + n, 0)) / 500) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[8] };
-                            } catch (e) {
-                                console.error('Harmonic Surge Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })(),
-                        // 10. Tensor Flow: SVD with Sequence
-                        (() => {
-                            try {
-                                const tensor = math.matrix(numbers.slice(0, 10).map(n => [n / 100, (n / 100) ** 2 * (1 + patternScore / 10 + lstmState + entropy + periodFactor)]));
-                                const svd = math.svd(tensor);
-                                const prediction = selectedIndex;
-                                const confidence = Math.min(1, (svd.s[0] || 1) / 5) * bayesFactor;
-                                return { number: prediction, result: sequenceResult, weight: confidence * state.engineWeights[9] };
-                            } catch (e) {
-                                console.error('Tensor Flow Error:', e);
-                                return { number: selectedIndex, result: 'Big', weight: 0.5 };
-                            }
-                        })()
-                    ];
-
-                    // Count votes for Big and Small
-                    const voteCount = enginePredictions.reduce((acc, p) => {
-                        acc[p.result] = (acc[p.result] || 0) + 1;
-                        return acc;
-                    }, { Big: 0, Small: 0 });
-
-                    // Check for equal votes
-                    if (voteCount.Big === voteCount.Small) {
-                        return {
-                            server: 'QuantumStar AI Predictor',
-                            numbers: [50, 51],
-                            result: 'Skipped',
-                            accuracy: 'N/A',
-                            confidence: '0.00',
-                            logic: `Prediction skipped due to equal voting (Big: ${voteCount.Big}, Small: ${voteCount.Small})`
-                        };
-                    }
-
-                    // Weighted Voting with Normalization
-                    const totalWeight = enginePredictions.reduce((sum, p) => sum + p.weight, 0) || 1;
-                    enginePredictions.forEach(p => p.weight = Math.max(0.1, p.weight / totalWeight));
-
-                    const votes = enginePredictions.reduce((acc, p) => {
-                        acc[p.result] = (acc[p.result] || 0) + p.weight;
-                        acc.confidenceSum = (acc.confidenceSum || 0) + p.weight;
-                        return acc;
-                    }, { Big: 0, Small: 0, confidenceSum: 0 });
-
-                    // Apply variance-based correction
-                    const voteBalance = Math.abs(votes.Big - votes.Small) / (votes.Big + votes.Small || 1);
-                    if (voteBalance < 0.1) {
-                        votes.Big *= (1 + variance / 10);
-                        votes.Small *= (1 - variance / 10);
-                    }
-
-                    const totalVotes = votes.Big + votes.Small || 1;
-                    const result = votes.Big > votes.Small ? 'Big' : 'Small';
-                    const numbersPredicted = result === 'Big' ? [selectedIndex, Math.min(selectedIndex + 1, 100)] : [selectedIndex, Math.max(selectedIndex - 1, 1)];
-                    const agreement = Math.max(votes.Big, votes.Small) / totalVotes;
-                    const confidence = votes.confidenceSum / enginePredictions.length;
-                    const confidenceScore = Math.min(100, (confidence * 100 * bayesFactor).toFixed(2));
-                    const accuracy = agreement >= 0.95 && confidence >= 0.85 ? 'Ultra' :
-                                    agreement >= 0.80 && confidence >= 0.70 ? 'High' :
-                                    agreement >= 0.60 && confidence >= 0.50 ? 'Medium' : 'Low';
-
-                    // Update engine weights
-                    enginePredictions.forEach((p, i) => {
-                        if (p.result === result) {
-                            state.engineWeights[i] += state.learningRate * confidence;
-                        } else {
-                            state.engineWeights[i] -= state.learningRate * confidence * 0.5;
-                        }
-                        state.engineWeights[i] = Math.max(0.1, Math.min(2.0, state.engineWeights[i]));
-                    });
-
-                    // Store confidence for analytics
-                    state.confidenceHistory.push({ confidence: confidenceScore, period: state.currentPeriod });
-                    state.confidenceHistory = state.confidenceHistory.slice(-10);
-
-                    return {
-                        server: 'QuantumStar AI Predictor',
-                        numbers: numbersPredicted,
-                        result: result,
-                        accuracy: accuracy,
-                        confidence: confidenceScore,
-                        logic: `QuantumStar AI Consensus (Big: ${voteCount.Big} votes, Small: ${voteCount.Small} votes, Weighted Big: ${votes.Big.toFixed(2)}, Weighted Small: ${votes.Small.toFixed(2)}, Selected Number: ${selectedNumber}, Predicted Numbers: ${numbersPredicted.join(', ')}, Sequence Index: ${sequenceIndex}, Confidence: ${confidenceScore}%, Pattern Score: ${patternScore.toFixed(2)}, Trend: ${trend.toFixed(2)}, Bayes Factor: ${bayesFactor.toFixed(2)}, LSTM State: ${lstmState.toFixed(2)}, Entropy: ${entropy.toFixed(2)}, Variance: ${variance.toFixed(2)}, Period Factor: ${periodFactor.toFixed(2)})`
-                    };
-                } catch (e) {
-                    console.error('QuantumStar AI Predictor Error:', e);
-                    return {
-                        server: 'QuantumStar AI Predictor',
-                        numbers: [50, 51],
-                        result: 'Big',
-                        accuracy: 'Low',
-                        confidence: '0.00',
-                        logic: `Prediction Error: Unable to process data (${e.message})`
-                    };
-                }
-            }
-        };
-
-        // Generate Predictions
-        async function generatePredictions(period) {
-            try {
-                if (period === state.lastPredictionPeriod || state.isLoading) {
-                    return;
-                }
-                state.isLoading = true;
-                const results = await fetchGameResult();
-                if (!results || results.length < 10) {
-                    console.error('Insufficient results for prediction:', results.length);
-                    state.predictions = [{
-                        server: 'QuantumStar AI Predictor',
-                        numbers: [50, 51],
-                        result: 'Big',
-                        accuracy: 'Low',
-                        confidence: '0.00',
-                        logic: 'Prediction failed due to insufficient results'
-                    }];
-                    render();
-                    return;
-                }
-                const prediction = predictionEngines.quantumStarAI(results);
-                if (!prediction.numbers) {
-                    console.error('Prediction generated with undefined numbers:', prediction);
-                    prediction.numbers = [50, 51];
-                    prediction.result = 'Big';
-                    prediction.accuracy = 'Low';
-                    prediction.confidence = '0.00';
-                    prediction.logic += ' | Fallback applied due to undefined numbers';
-                }
-                state.predictions = [prediction];
-                state.history.unshift({
-                    ...prediction,
-                    period: period || state.currentPeriod || 'N/A',
-                    timestamp: new Date().toLocaleString()
-                });
-                state.history = state.history.slice(0, 100);
-                state.lastPredictionPeriod = period;
-                localStorage.setItem('kbxHistory', JSON.stringify(state.history));
-                render();
-            } catch (e) {
-                console.error('Prediction generation error:', e);
-                state.predictions = [{
-                    server: 'QuantumStar AI Predictor',
-                    numbers: [50, 51],
-                    result: 'Big',
-                    accuracy: 'Low',
-                    confidence: '0.00',
-                    logic: `Prediction Error: Failed to generate prediction (${e.message})`
-                }];
-                renderErrorNotification(`Prediction generation failed: ${e.message}`);
-            } finally {
-                state.isLoading = false;
-            }
-        }
-
-        // Export History
-        function exportHistory() {
-            const dataStr = JSON.stringify(state.history, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `kbx_history_${new Date().toISOString()}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // Render UI
-        function render() {
-            const allPredictionsList = document.getElementById('all-predictions-list');
-            const predictionDetails = document.getElementById('prediction-details');
-            const historyList = document.getElementById('history-list');
-            const resultsList = document.getElementById('results-list');
-            const patternAnalysisList = document.getElementById('pattern-analysis-list');
-
-            // Render All Predictions
-            if (allPredictionsList) {
-                allPredictionsList.innerHTML = state.predictions.length > 0 ? state.predictions.map(p => `
-                    <div class="bg-gray-900/80 glass-effect p-4 rounded-lg shadow-md hover-glow transition-shadow animate-slide-up">
-                        <h3 class="text-xl font-semibold text-purple-300">${p.server}</h3>
-                        <p>PERIOD- ${state.currentPeriod || 'N/A'}</p>
-                        <p>METHOD- ${Array.isArray(p.numbers) ? p.numbers.join(', ') : 'N/A'}</p>
-                        <p>PREDICT- <span class="${p.result === 'Big' ? 'text-green-400' : p.result === 'Small' ? 'text-red-400' : 'text-gray-400'}">${p.result}</span></p>
-                        <p>Accuracy: ${p.accuracy} (${p.confidence}%)</p>
-                        
-                    </div>
-                `).join('') : '<p class="text-gray-400">No predictions available. Please wait or check connection...</p>';
-            }
-
-            // Render Prediction Details for Selected Server
-            if (predictionDetails && state.selectedServer !== null) {
-                const selectedPrediction = state.predictions[state.selectedServer];
-                predictionDetails.innerHTML = selectedPrediction ? `
-                    <div class="bg-gray-900/80 glass-effect p-4 rounded-lg shadow-md animate-slide-up">
-                        <h3 class="text-xl font-semibold text-purple-300">${selectedPrediction.server}</h3>
-                        <p>PERIOD- ${state.currentPeriod || 'N/A'}</p>
-                        <p>METHOD- ${Array.isArray(selectedPrediction.numbers) ? selectedPrediction.numbers.join(', ') : 'N/A'}</p>
-                        <p>PREDICT- <span class="${selectedPrediction.result === 'Big' ? 'text-green-400' : selectedPrediction.result === 'Small' ? 'text-red-400' : 'text-gray-400'}">${selectedPrediction.result}</span></p>
-                        <p>ACCURACY- ${selectedPrediction.accuracy} (${selectedPrediction.confidence}%)</p>
-                        <p>Logic: ${selectedPrediction.logic}</p>
-                    </div>
-                ` : '<p class="text-gray-400">No prediction available.</p>';
-            } else if (predictionDetails) {
-                predictionDetails.innerHTML = '<p class="text-gray-400">Select a server to view prediction details.</p>';
-            }
-
-            // Render History
-            if (historyList) {
-                historyList.innerHTML = state.history.length > 0 ? state.history.map(h => `
-                    <div class="bg-gray-900/80 glass-effect p-4 rounded-lg shadow-md animate-slide-up">
-                        <p>PERIOD- ${h.period}</p>
-                        <p>SERVER- ${h.server}</p>
-                        <p>METHOD- ${Array.isArray(h.numbers) ? h.numbers.join(', ') : 'N/A'}</p>
-                        <p>Result: <span class="${h.result === 'Big' ? 'text-green-400' : h.result === 'Small' ? 'text-red-400' : 'text-gray-400'}">${h.result}</span></p>
-                        <p>Accuracy: ${h.accuracy} (${h.confidence}%)</p>
-                        <p>Timestamp: ${h.timestamp}</p>
-                    </div>
-                `).join('') : '<p class="text-gray-400">No history available.</p>';
-            }
-
-            // Render Results
-            if (resultsList) {
-                resultsList.innerHTML = state.results.length > 0 ? state.results.map(r => `
-                    <div class="bg-gray-900/80 glass-effect p-4 rounded-lg shadow-md animate-slide-up">
-                        <p>Period: ${r.issueNumber}</p>
-                        <p>Number: ${r.number}</p>
-                        <p>Result: <span class="${parseInt(r.number) > 50 ? 'text-green-400' : 'text-red-400'}">${parseInt(r.number) > 50 ? 'Big' : 'Small'}</span></p>
-                        <p>Time: ${r.openTime}</p>
-                    </div>
-                `).join('') : '<p class="text-gray-400">No results available.</p>';
-            }
-
-            // Render Pattern Analysis
-            if (patternAnalysisList) {
-                patternAnalysisList.innerHTML = state.results.length > 0 ? analyzePatterns() : 'No pattern data available.';
-            }
-
-            // Render Confidence Chart
-            renderConfidenceChart();
-        }
-
-        // Tab Navigation
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('bg-gradient-to-r', 'from-purple-600', 'to-pink-600'));
-                button.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600');
-                document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-                document.getElementById(`${button.id.replace('-tab', '')}-content`).classList.remove('hidden');
-                state.selectedServer = null;
-                document.getElementById('servers').classList.remove('hidden');
-                document.getElementById('prediction').classList.add('hidden');
-                render();
-            });
+        document.getElementById('home-tab').addEventListener('click', () => {
+            currentTab = 'home';
+            document.getElementById('home-tab').classList.add('active');
+            document.getElementById('results-tab').classList.remove('active');
+            render();
         });
-
-        // Server Button Navigation
-        document.querySelectorAll('.server-btn').forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                state.selectedServer = index;
-                document.getElementById('servers').classList.add('hidden');
-                document.getElementById('prediction').classList.remove('hidden');
-                render();
-            });
-        });
-
-        // Change Server Button
-        document.getElementById('change-server-btn').addEventListener('click', () => {
-            state.selectedServer = null;
-            document.getElementById('servers').classList.remove('hidden');
-            document.getElementById('prediction').classList.add('hidden');
+        document.getElementById('results-tab').addEventListener('click', () => {
+            currentTab = 'results';
+            document.getElementById('results-tab').classList.add('active');
+            document.getElementById('home-tab').classList.remove('active');
             render();
         });
 
-        // Export History Button
-        document.getElementById('export-history-btn').addEventListener('click', exportHistory);
-
-        // Theme Toggle
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            document.getElementById('theme-toggle').innerText = document.body.classList.contains('light-mode') ? 'Toggle Dark Mode' : 'Toggle Light Mode';
-        });
-
-        // Periodic Update
-        setInterval(() => {
+        window.addEventListener('load', async () => {
+            state.isLoading = true;
+            render();
+            await fetchGameResult();
+            state.isLoading = false;
             const period = updateGamePeriod();
-            generatePredictions(period);
-        }, 1000);
-
-        // Initial Fetch and Countdown
-        const period = updateGamePeriod();
-        generatePredictions(period);
-        startCountdown();
+            generatePrediction(period);
+            setInterval(checkMinuteChange, 1000);
+            setInterval(async () => {
+                const results = await fetchGameResult();
+                console.log('Fetched results:', results);
+            }, 5000);
+        });
     </script>
 </body>
 </html>
