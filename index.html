@@ -34,7 +34,7 @@
 </head>
 <body class="min-h-screen text-gray-200 font-sans">
     <div class="container mx-auto p-4 sm:p-6">
-        <h1 class="text-4xl font-bold text-center mb-6 text-orange-400">KB MODDER SERVERS</h1>
+        <h1 class="text-4xl font-bold text-center mb-6 text-orange-400">Game Predictions & Results</h1>
         <div class="flex justify-center mb-4">
             <button id="home-tab" class="tab-button px-4 py-2 mx-2 rounded-t-lg text-lg font-semibold bg-gray-700 hover:bg-gray-600 active">Home</button>
             <button id="results-tab" class="tab-button px-4 py-2 mx-2 rounded-t-lg text-lg font-semibold bg-gray-700 hover:bg-gray-600">Results</button>
@@ -335,15 +335,15 @@
             state.leastFrequentNumber = leastFrequent;
             state.nextPeriod = period;
             history.unshift({
-                PERIOD: period,
+                period: period,
                 number: 'N/A',
-                RESULT: 'N/A',
-                SERVER ULTRA: prediction,
-                SERVER VIP: predictionEnhanced,
-                SERVER AI: predictionAI,
-                CONFIDENCE: confidence,
-                CONFIDENCE VIP: confidenceEnhanced,
-               C: confidenceAI,
+                result: 'N/A',
+                prediction: prediction,
+                predictionEnhanced: predictionEnhanced,
+                predictionAI: predictionAI,
+                confidence: confidence,
+                confidenceEnhanced: confidenceEnhanced,
+                confidenceAI: confidenceAI,
                 time: new Date().toLocaleString()
             });
             if (history.length > 20) {
